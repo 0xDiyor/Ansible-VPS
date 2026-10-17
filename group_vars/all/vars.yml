@@ -42,6 +42,12 @@ aiostreams_secret_key: "{{ vault_aiostreams_secret_key }}"
 # Dashboard login, "username:password". The dashboard is admin-only.
 aiostreams_auth: "{{ vault_aiostreams_auth }}"
 aiostreams_mem_limit: 1g
+# Extra AIOStreams settings. Setting one here locks it (read-only in the dashboard).
+aiostreams_extra_env:
+  # Defaults (30 catalog / 15 meta requests per 5s per IP) are made for public
+  # instances; Stremio's home screen fires 100+ catalog requests at once.
+  STREMIO_CATALOG_RATE_LIMIT_MAX_REQUESTS: 300
+  STREMIO_META_RATE_LIMIT_MAX_REQUESTS: 60
 
 # ---- Hermes Agent ----------------------------------------------------------
 hermes_image: nousresearch/hermes-agent:v0.22.2
