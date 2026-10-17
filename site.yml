@@ -12,4 +12,6 @@
     - { role: ssh, tags: [ssh] }
     - { role: firewall, tags: [firewall] }
     - { role: docker, tags: [docker] }
+    - { role: caddy, tags: [caddy] }
     - { role: hermes, tags: [hermes] }
+    - { role: aiostreams, tags: [aiostreams] }

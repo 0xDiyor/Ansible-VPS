@@ -6,6 +6,13 @@
 # openssl passwd -6     (type your sudo password; paste the $6$... output)
 vault_admin_password_hash: "$6$CHANGE_ME"
 
+# openssl rand -hex 32  (NEVER change this after first start, or AIOStreams
+# can no longer decrypt saved user configs)
+vault_aiostreams_secret_key: "CHANGE_ME_64_HEX_CHARS"
+
+# Dashboard login for AIOStreams
+vault_aiostreams_auth: "admin:CHANGE_ME_LONG_RANDOM_PASSWORD"
+
 # Anything Hermes reads from its environment. Keep only what you use.
 vault_hermes_env:
   OPENROUTER_API_KEY: "sk-or-CHANGE_ME"

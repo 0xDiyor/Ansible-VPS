@@ -1,0 +1,30 @@
+# Caddy is the only thing listening on 80/443. It gets Let's Encrypt
+# certificates by itself and forwards traffic to AIOStreams on localhost.
+- name: Add Caddy's official apt repository
+  ansible.builtin.deb822_repository:
+    name: caddy
+    types: deb
+    uris: https://dl.cloudsmith.io/public/caddy/stable/deb/debian
+    suites: any-version
+    components: main
+    signed_by: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+
+- name: Install Caddy
+  ansible.builtin.apt:
+    name: caddy
+    state: present
+    update_cache: true
+
+- name: Write Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    mode: "0644"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: Reload caddy
+
+- name: Start Caddy on boot
+  ansible.builtin.service:
+    name: caddy
+    state: started
+    enabled: true

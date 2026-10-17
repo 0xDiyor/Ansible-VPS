@@ -1,0 +1,26 @@
+# {{ ansible_managed }}
+services:
+  aiostreams:
+    image: {{ aiostreams_image }}
+    container_name: aiostreams
+    restart: unless-stopped
+    # The image runs as root by default; force the host's "aiostreams" user.
+    user: "{{ aiostreams_uid }}:{{ aiostreams_uid }}"
+    # 127.0.0.1 matters: Docker-published ports skip UFW, so a plain
+    # "3000:3000" would expose this to the whole internet. Caddy is the
+    # only way in.
+    ports:
+      - "127.0.0.1:{{ aiostreams_port }}:3000"
+    env_file: aiostreams.env
+    volumes:
+      - ./data:/app/data
+    # Own network, no Linux capabilities, can't gain privileges.
+    networks: [aiostreams]
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: {{ aiostreams_mem_limit }}
+    pids_limit: 256
+
+networks:
+  aiostreams:
