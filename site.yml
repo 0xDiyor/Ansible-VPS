@@ -1,0 +1,11 @@
+# The main playbook. Safe to re-run any time: Ansible only changes what
+# differs from what's described here ("idempotent").
+#   ansible-playbook site.yml --ask-become-pass --ask-vault-pass
+#
+# Each role is one self-contained job. Tags let you run part of it, e.g.
+#   ansible-playbook site.yml -K -J --tags aiostreams
+- name: Harden and configure VPS
+  hosts: vps
+  become: true   # use sudo for every task
+  roles:
+    - { role: common, tags: [common] }

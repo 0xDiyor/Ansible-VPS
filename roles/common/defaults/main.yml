@@ -1,0 +1,22 @@
+common_sysctl_hardening:
+  # Ignore spoofed packets and ICMP redirects (used to hijack routing).
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.default.rp_filter: 1
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.default.accept_redirects: 0
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.tcp_syncookies: 1
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  # Hide kernel memory addresses and logs from unprivileged users.
+  kernel.kptr_restrict: 2
+  kernel.dmesg_restrict: 1
+  # Stop processes from inspecting each other's memory unless they're parent/child.
+  kernel.yama.ptrace_scope: 1
+  fs.protected_hardlinks: 1
+  fs.protected_symlinks: 1
+  fs.suid_dumpable: 0
+  # ip_forward is deliberately NOT touched: Docker needs it on.

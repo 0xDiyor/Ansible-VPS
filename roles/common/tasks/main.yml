@@ -1,0 +1,45 @@
+- name: Check this is a Debian-family system
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] == 'Debian'
+    fail_msg: "This playbook supports Ubuntu and Debian only."
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    upgrade: dist
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - unattended-upgrades
+      - apt-listchanges
+    state: present
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+# Installs security updates every day on its own.
+- name: Enable automatic security updates
+  ansible.builtin.template:
+    src: 20auto-upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: "0644"
+
+- name: Configure automatic reboots for updates
+  ansible.builtin.template:
+    src: 52unattended-upgrades-local.j2
+    dest: /etc/apt/apt.conf.d/52unattended-upgrades-local
+    mode: "0644"
+
+# Kernel settings that close off common network attacks and info leaks.
+- name: Apply kernel hardening settings
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/90-hardening.conf
+    reload: true
+  loop: "{{ common_sysctl_hardening | dict2items }}"

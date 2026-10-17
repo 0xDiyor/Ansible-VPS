@@ -8,3 +8,8 @@ admin_user: diyor
 admin_ssh_pubkey: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
 # SHA-512 crypt hash used for sudo. Generate with: openssl passwd -6
 admin_password_hash: "{{ vault_admin_password_hash }}"
+
+# ---- System ----------------------------------------------------------------
+timezone: Etc/UTC
+# Reboot automatically (at 04:00) when a security update needs it.
+auto_reboot: false
