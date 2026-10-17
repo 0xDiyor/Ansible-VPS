@@ -14,6 +14,7 @@ locked-down Linux user.
 | `firewall` | UFW: deny everything inbound except 22 (rate limited), 80, 443. fail2ban bans SSH brute forcers |
 | `docker` | Docker Engine from Docker's repo, log rotation, `live-restore`, no inter-container traffic on the default bridge |
 | `caddy` | HTTPS reverse proxy with automatic Let's Encrypt certs, the only thing on 80/443 |
+| `tailscale` | Joins your tailnet and publishes the Hermes and AIOStreams dashboards there only, over HTTPS |
 | `hermes` | `hermes` system user (uid 10001), `/srv/hermes`, gateway + dashboard containers |
 | `aiostreams` | `aiostreams` system user (uid 10002), `/srv/aiostreams`, container with no capabilities, port bound to localhost |
 
@@ -31,9 +32,10 @@ locked-down Linux user.
 ## Network layout
 
 ```
-internet ──443──▶ Caddy ──▶ 127.0.0.1:3000 ▶ AIOStreams
+internet ──443──▶ Caddy ──▶ 127.0.0.1:3000 ▶ AIOStreams (config page needs login)
 internet ──22───▶ sshd (key only, you only)
-                   └─ ssh -L tunnel ▶ 127.0.0.1:9119 ▶ Hermes dashboard
+tailnet  ──9119─▶ tailscale serve ▶ 127.0.0.1:9119 ▶ Hermes dashboard (login required)
+tailnet  ──8443─▶ tailscale serve ▶ 127.0.0.1:3000 ▶ AIOStreams
 Hermes gateway: outbound only (LLM APIs, Telegram, etc.)
 ```
 
@@ -107,6 +109,26 @@ After this, `root` can't log in at all and passwords are rejected over SSH.
 for, and tasks time out at "waiting for privilege escalation prompt". Set
 `ansible_become_exe: sudo.ws` in `inventory/hosts.yml` to use the classic sudo instead.
 
+### 6. Tailscale (once)
+
+The first run installs Tailscale but can't log it in for you. On the VPS:
+
+```sh
+sudo tailscale up --hostname=vps     # open the link it prints and approve the machine
+```
+
+In the [Tailscale admin console](https://login.tailscale.com/admin): under **DNS** enable
+MagicDNS and **HTTPS Certificates**, and under **Machines** > `vps` choose
+**Disable key expiry** (otherwise it drops off after 180 days). Then re-run
+`ansible-playbook site.yml`.
+
+With Tailscale running on your own device:
+
+- Hermes: `https://vps.<tailnet>.ts.net:9119` (user `admin`, password `vault_hermes_dashboard_password`)
+- AIOStreams: `https://vps.<tailnet>.ts.net:8443`
+
+Port 443 isn't used on the tailnet because Caddy already holds it on every address.
+
 ## Day to day
 
 | Task | Command |
@@ -115,7 +137,7 @@ for, and tasks time out at "waiting for privilege escalation prompt". Set
 | Only one part | `ansible-playbook site.yml --tags aiostreams` |
 | Update an app | bump `aiostreams_image` / `hermes_image` in `vars.yml`, re-run with that tag |
 | Change a secret | `ansible-vault edit group_vars/all/vault.yml`, re-run |
-| Hermes dashboard | `ssh -L 9119:localhost:9119 <admin_user>@<VPS_IP>` then open http://localhost:9119 |
+| Hermes dashboard | `https://vps.<tailnet>.ts.net:9119` with Tailscale on (or `ssh -L 9119:localhost:9119 <admin_user>@<VPS_IP>`) |
 | Pick the Hermes AI provider | `ssh -t <admin_user>@<VPS_IP> sudo docker exec -it hermes hermes model` |
 | Logs | `sudo docker logs -f aiostreams` / `sudo docker logs -f hermes` |
 | Ban list | `sudo fail2ban-client status sshd` |
