@@ -21,3 +21,11 @@ vault_hermes_env:
   # TELEGRAM_BOT_TOKEN: ""
   # Without this, anyone who finds your bot can command it. Use your numeric Telegram user ID.
   # TELEGRAM_ALLOWED_USERS: "123456789"
+
+# Hermes dashboard login (user is hermes_dashboard_user in vars.yml)
+vault_hermes_dashboard_password: "CHANGE_ME_LONG_RANDOM_PASSWORD"
+# openssl rand -base64 32
+vault_hermes_dashboard_secret: "CHANGE_ME"
+
+# Optional: Tailscale auth key to log in without a browser
+# vault_tailscale_authkey: "tskey-auth-CHANGE_ME"

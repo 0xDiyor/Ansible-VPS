@@ -34,5 +34,7 @@ services:
     <<: *hermes
     container_name: hermes-dashboard
     depends_on: [gateway]
-    # Holds your keys and has no login: localhost only, reach it via SSH tunnel.
+    env_file: dashboard.env
+    # Holds your keys. Listens on localhost only; Tailscale serve publishes it
+    # to your tailnet, and the login in dashboard.env guards it.
     command: ["dashboard", "--host", "127.0.0.1", "--no-open"]
