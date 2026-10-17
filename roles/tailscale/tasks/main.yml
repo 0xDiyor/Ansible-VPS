@@ -23,6 +23,7 @@
   ansible.builtin.command: tailscale status --json
   register: tailscale_status_raw
   changed_when: false
+  check_mode: false   # read-only, so safe to run in --check too
   failed_when: false   # exits non-zero while logged out
 
 - name: Log in with auth key
@@ -38,6 +39,7 @@
   ansible.builtin.command: tailscale status --json
   register: tailscale_status_raw
   changed_when: false
+  check_mode: false   # read-only, so safe to run in --check too
   failed_when: false
 
 - name: Note whether Tailscale is logged in
@@ -64,6 +66,7 @@
       ansible.builtin.command: tailscale serve status --json
       register: tailscale_serve_raw
       changed_when: false
+      check_mode: false
 
     - name: Parse serve config
       ansible.builtin.set_fact:
