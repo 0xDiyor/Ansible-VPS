@@ -1,0 +1,38 @@
+# {{ ansible_managed }}
+# Based on upstream docker-compose.yml from NousResearch/hermes-agent.
+#
+# The image starts as root just long enough to remap its internal user to
+# HERMES_UID/GID and fix file ownership, then every process drops to that
+# user. So inside and outside the container, Hermes runs as the host's
+# "hermes" account ({{ hermes_uid }}).
+#
+# Host networking (as upstream) lets the dashboard bind to the VPS's own
+# 127.0.0.1 only. UFW still applies to host-network containers, so nothing
+# here is reachable from the internet.
+x-hermes: &hermes
+  image: {{ hermes_image }}
+  restart: unless-stopped
+  network_mode: host
+  volumes:
+    - ./data:/opt/data
+  environment:
+    HERMES_UID: "{{ hermes_uid }}"
+    HERMES_GID: "{{ hermes_uid }}"
+  security_opt:
+    - no-new-privileges:true
+  mem_limit: {{ hermes_mem_limit }}
+  pids_limit: 512
+
+services:
+  gateway:
+    <<: *hermes
+    container_name: hermes
+    env_file: hermes.env
+    command: ["gateway", "run"]
+
+  dashboard:
+    <<: *hermes
+    container_name: hermes-dashboard
+    depends_on: [gateway]
+    # Holds your keys and has no login: localhost only, reach it via SSH tunnel.
+    command: ["dashboard", "--host", "127.0.0.1", "--no-open"]
