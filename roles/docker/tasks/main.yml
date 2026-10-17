@@ -1,0 +1,49 @@
+- name: Gather installed packages
+  ansible.builtin.package_facts:
+
+# Distro "docker.io" packages are older and conflict with Docker's own.
+# Only done before first install: containerd.io "provides" containerd/runc,
+# so running this later could uninstall Docker itself.
+- name: Remove conflicting container packages
+  ansible.builtin.apt:
+    name: [docker.io, docker-compose, docker-compose-v2, podman-docker, containerd, runc]
+    state: absent
+  when: "'docker-ce' not in ansible_facts.packages"
+
+- name: Add Docker's official apt repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}"
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: stable
+    architectures: "{{ docker_deb_arch[ansible_facts['architecture']] }}"
+    signed_by: "https://download.docker.com/linux/{{ ansible_facts['distribution'] | lower }}/gpg"
+
+- name: Install Docker Engine and the Compose plugin
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Configure Docker daemon
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    content: "{{ docker_daemon_config | to_nice_json }}\n"
+  notify: Restart docker
+
+- name: Start Docker on boot
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+# Apply a daemon.json change now, before the apps start, not at the end.
+- name: Apply pending Docker restart
+  ansible.builtin.meta: flush_handlers

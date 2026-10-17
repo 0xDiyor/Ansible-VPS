@@ -1,0 +1,14 @@
+docker_deb_arch:
+  x86_64: amd64
+  aarch64: arm64
+
+docker_daemon_config:
+  # Rotate container logs so they can't fill the disk.
+  log-driver: local
+  log-opts:
+    max-size: 10m
+    max-file: "3"
+  # Containers keep running while the Docker daemon restarts/upgrades.
+  live-restore: true
+  # Containers on the default bridge can't talk to each other.
+  icc: false
