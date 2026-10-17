@@ -1,8 +1,10 @@
 # {{ ansible_managed }}
+{% if acme_email %}
 {
 	email {{ acme_email }}
 }
 
+{% endif %}
 {{ aiostreams_domain }} {
 	encode zstd gzip
 	header {
