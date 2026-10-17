@@ -1,0 +1,9 @@
+# Extra Ansible modules this project uses. Install with:
+#   ansible-galaxy collection install -r requirements.yml
+collections:
+  - name: ansible.posix       # authorized_key, sysctl
+    version: ">=1.5.0"
+  - name: community.general   # ufw, timezone
+    version: ">=8.0.0"
+  - name: community.docker    # docker_compose_v2
+    version: ">=4.0.0"
