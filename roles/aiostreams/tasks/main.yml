@@ -1,0 +1,63 @@
+- name: Create aiostreams group
+  ansible.builtin.group:
+    name: aiostreams
+    gid: "{{ aiostreams_uid }}"
+    system: true
+
+- name: Create aiostreams user
+  ansible.builtin.user:
+    name: aiostreams
+    uid: "{{ aiostreams_uid }}"
+    group: aiostreams
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ aiostreams_dir }}"
+    create_home: false
+    password: "!"
+
+- name: Create AIOStreams app directory
+  ansible.builtin.file:
+    path: "{{ aiostreams_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create AIOStreams data directory
+  ansible.builtin.file:
+    path: "{{ aiostreams_dir }}/data"
+    state: directory
+    owner: aiostreams
+    group: aiostreams
+    mode: "0700"
+
+- name: Check the AIOStreams secret key format
+  ansible.builtin.assert:
+    that: aiostreams_secret_key is match('^[0-9a-f]{64}$')
+    fail_msg: "vault_aiostreams_secret_key must be 64 hex chars (openssl rand -hex 32)."
+  no_log: true
+
+- name: Write AIOStreams secrets file
+  ansible.builtin.template:
+    src: aiostreams.env.j2
+    dest: "{{ aiostreams_dir }}/aiostreams.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Write AIOStreams compose file
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ aiostreams_dir }}/compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Start AIOStreams
+  community.docker.docker_compose_v2:
+    project_src: "{{ aiostreams_dir }}"
+    state: present
+    pull: missing
+    wait: true          # wait until the image's healthcheck reports healthy
+    wait_timeout: 120

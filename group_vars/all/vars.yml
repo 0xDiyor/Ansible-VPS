@@ -21,6 +21,21 @@ firewall_open_ports:
   - { port: "443", proto: tcp }   # HTTPS
   - { port: "443", proto: udp }   # HTTP/3
 
+# ---- AIOStreams ------------------------------------------------------------
+# Stremio only installs addons over HTTPS, so AIOStreams needs a domain whose
+# DNS A record points at this VPS. Caddy gets a certificate for it automatically.
+aiostreams_domain: aiostreams.example.com
+acme_email: you@example.com   # Let's Encrypt sends certificate expiry warnings here
+# Pin exact versions so nothing changes unless you change it here.
+aiostreams_image: ghcr.io/viren070/aiostreams:v2.36.0
+aiostreams_uid: 10002
+# Only reachable from the VPS itself; the internet reaches it through Caddy.
+aiostreams_port: 3000
+aiostreams_secret_key: "{{ vault_aiostreams_secret_key }}"
+# Dashboard login, "username:password". The dashboard is admin-only.
+aiostreams_auth: "{{ vault_aiostreams_auth }}"
+aiostreams_mem_limit: 1g
+
 # ---- Hermes Agent ----------------------------------------------------------
 hermes_image: nousresearch/hermes-agent:v0.22.2
 hermes_uid: 10001
