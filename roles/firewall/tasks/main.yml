@@ -1,0 +1,42 @@
+- name: Install firewall and fail2ban
+  ansible.builtin.apt:
+    name:
+      - ufw
+      - fail2ban
+      - python3-systemd   # lets fail2ban read SSH logs from the systemd journal
+    state: present
+
+# Allow SSH BEFORE turning the firewall on, or you'd cut off your own session.
+# "limit" blocks an IP that opens 6+ connections in 30 seconds.
+- name: Allow SSH (rate limited)
+  community.general.ufw:
+    rule: limit
+    port: "22"
+    proto: tcp
+
+- name: Allow public service ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop: "{{ firewall_open_ports }}"
+
+- name: Deny all other incoming traffic and enable firewall
+  community.general.ufw:
+    state: enabled
+    direction: incoming
+    policy: deny
+
+# fail2ban watches the SSH log and bans IPs that keep failing to log in.
+- name: Configure fail2ban
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+  notify: Restart fail2ban
+
+- name: Start fail2ban on boot
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true

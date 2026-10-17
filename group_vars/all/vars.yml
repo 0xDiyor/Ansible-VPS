@@ -13,3 +13,10 @@ admin_password_hash: "{{ vault_admin_password_hash }}"
 timezone: Etc/UTC
 # Reboot automatically (at 04:00) when a security update needs it.
 auto_reboot: false
+
+# ---- Firewall --------------------------------------------------------------
+# Ports open to the internet. SSH is always allowed (rate limited).
+firewall_open_ports:
+  - { port: "80", proto: tcp }    # HTTP (Caddy redirects to HTTPS, and Let's Encrypt uses it)
+  - { port: "443", proto: tcp }   # HTTPS
+  - { port: "443", proto: udp }   # HTTP/3
