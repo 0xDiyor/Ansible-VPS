@@ -1,0 +1,6 @@
+# Handlers only run when a task "notifies" them AND that task changed
+# something, so sshd restarts only when its config actually changed.
+- name: Restart ssh
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
