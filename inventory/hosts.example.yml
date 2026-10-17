@@ -1,0 +1,18 @@
+# The inventory is the list of servers Ansible manages. Copy this file to
+# hosts.yml (git ignores it) and fill in your server's details:
+#   cp inventory/hosts.example.yml inventory/hosts.yml
+# Values set here override the defaults in group_vars/all/vars.yml.
+all:
+  children:
+    vps:
+      hosts:
+        ionos:
+          ansible_host: 203.0.113.10                 # your VPS public IP
+          admin_user: your-username                  # the account you'll log in as
+          admin_ssh_key_file: ~/.ssh/id_ed25519      # private key; the .pub next to it gets installed
+          # Domain whose DNS A record points at the VPS. No domain? Use
+          # <ip-with-dashes>.sslip.io, e.g. 203-0-113-10.sslip.io
+          aiostreams_domain: aiostreams.example.com
+          # Ubuntu 26.04+ only: its default sudo (sudo-rs) ignores the custom
+          # password prompt Ansible waits for. sudo.ws is the classic sudo.
+          # ansible_become_exe: sudo.ws
