@@ -1,0 +1,10 @@
+# Settings for every server. Ansible loads everything in group_vars/all/
+# automatically. Secrets live next door in vault.yml (encrypted); here we
+# only reference them by their vault_* names.
+
+# ---- Admin login -----------------------------------------------------------
+# The only account allowed to SSH in. Root login gets disabled.
+admin_user: admin
+admin_ssh_pubkey: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
+# SHA-512 crypt hash used for sudo. Generate with: openssl passwd -6
+admin_password_hash: "{{ vault_admin_password_hash }}"
