@@ -1,0 +1,24 @@
+# Run ONCE on a fresh VPS, as root (the only account IONOS gives you):
+#   ansible-playbook bootstrap.yml -u root --ask-vault-pass
+#
+# It creates your personal admin account with your SSH key and sudo rights.
+# After this, everything runs as that user via site.yml, and site.yml turns
+# root login off.
+- name: Bootstrap admin user
+  hosts: vps
+  become: true
+  tasks:
+    - name: Create admin user
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        password: "{{ admin_password_hash }}"
+        groups: sudo
+        append: true
+        shell: /bin/bash
+        create_home: true
+
+    - name: Install SSH public key for admin user
+      ansible.posix.authorized_key:
+        user: "{{ admin_user }}"
+        key: "{{ admin_ssh_pubkey }}"
+        exclusive: true   # this key only; removes anything else in the file

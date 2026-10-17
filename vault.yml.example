@@ -1,0 +1,7 @@
+# Template for group_vars/all/vault.yml. Copy it, fill it in, then encrypt:
+#   cp vault.yml.example group_vars/all/vault.yml
+#   ansible-vault encrypt group_vars/all/vault.yml
+# Edit later with: ansible-vault edit group_vars/all/vault.yml
+
+# openssl passwd -6     (type your sudo password; paste the $6$... output)
+vault_admin_password_hash: "$6$CHANGE_ME"
