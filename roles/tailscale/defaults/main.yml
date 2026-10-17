@@ -1,0 +1,11 @@
+# Name of this machine on your tailnet: https://<name>.<tailnet>.ts.net
+tailscale_hostname: vps
+# Optional auth key (Tailscale admin > Settings > Keys) for logging in without
+# a browser. Leave it unset to log in once by hand with `sudo tailscale up`.
+tailscale_authkey: "{{ vault_tailscale_authkey | default('') }}"
+
+# Local services published to the tailnet only, over HTTPS, by `tailscale serve`.
+# Not 443: Caddy already holds that port on every address, the tailnet one too.
+tailscale_serve:
+  - { port: "{{ hermes_dashboard_tailnet_port }}", target: "http://127.0.0.1:9119" }  # Hermes dashboard
+  - { port: 8443, target: "http://127.0.0.1:{{ aiostreams_port }}" }  # AIOStreams

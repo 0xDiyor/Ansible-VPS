@@ -1,0 +1,87 @@
+- name: Add Tailscale's official apt repository
+  ansible.builtin.deb822_repository:
+    name: tailscale
+    types: deb
+    uris: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}"
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: main
+    signed_by: "https://pkgs.tailscale.com/stable/{{ ansible_facts['distribution'] | lower }}/{{ ansible_facts['distribution_release'] }}.gpg"
+
+- name: Install Tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+    update_cache: true
+
+- name: Start Tailscale on boot
+  ansible.builtin.service:
+    name: tailscaled
+    state: started
+    enabled: true
+
+- name: Read Tailscale status
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status_raw
+  changed_when: false
+  failed_when: false   # exits non-zero while logged out
+
+- name: Log in with auth key
+  ansible.builtin.command:
+    argv: [tailscale, up, "--authkey={{ tailscale_authkey }}", "--hostname={{ tailscale_hostname }}"]
+  when:
+    - (tailscale_status_raw.stdout | from_json).BackendState != 'Running'
+    - tailscale_authkey | length > 0
+  changed_when: true
+  no_log: true
+
+- name: Re-read Tailscale status
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status_raw
+  changed_when: false
+  failed_when: false
+
+- name: Note whether Tailscale is logged in
+  ansible.builtin.set_fact:
+    tailscale_status: "{{ tailscale_status_raw.stdout | from_json }}"
+
+# Logging in needs a browser once. Everything below waits for that.
+- name: Explain how to log in
+  ansible.builtin.debug:
+    msg: >-
+      Tailscale is installed but not logged in. On the VPS run
+      `sudo tailscale up --hostname={{ tailscale_hostname }}`, open the link,
+      then re-run this playbook.
+  when: tailscale_status.BackendState != 'Running'
+
+- name: Publish dashboards to the tailnet
+  when: tailscale_status.BackendState == 'Running'
+  block:
+    - name: Remember this machine's tailnet name
+      ansible.builtin.set_fact:
+        tailscale_dns_name: "{{ tailscale_status.Self.DNSName | regex_replace('\\.$', '') }}"
+
+    - name: Read current serve config
+      ansible.builtin.command: tailscale serve status --json
+      register: tailscale_serve_raw
+      changed_when: false
+
+    - name: Parse serve config
+      ansible.builtin.set_fact:
+        tailscale_serve_web: "{{ (tailscale_serve_raw.stdout | default('{}', true) | from_json).Web | default({}) }}"
+
+    - name: Stop serving ports that are no longer listed
+      ansible.builtin.command:
+        argv: [tailscale, serve, "--https={{ item | split(':') | last }}", "off"]
+      loop: "{{ tailscale_serve_web.keys() | list }}"
+      when: (item | split(':') | last | int) not in (tailscale_serve | map(attribute='port') | map('int') | list)
+      changed_when: true
+
+    # Only HTTPS on the tailnet IP; nothing here is reachable from the internet.
+    - name: Serve local services on the tailnet
+      ansible.builtin.command:
+        argv: [tailscale, serve, --bg, "--https={{ item.port }}", "{{ item.target }}"]
+      loop: "{{ tailscale_serve }}"
+      when: >-
+        tailscale_serve_web.get(tailscale_dns_name ~ ':' ~ item.port, {}).get('Handlers', {})
+        .get('/', {}).get('Proxy', '') != item.target
+      changed_when: true

@@ -14,5 +14,6 @@
     - { role: firewall, tags: [firewall] }
     - { role: docker, tags: [docker] }
     - { role: caddy, tags: [caddy] }
+    - { role: tailscale, tags: [tailscale, hermes] }   # hermes needs its tailnet name
     - { role: hermes, tags: [hermes] }
     - { role: aiostreams, tags: [aiostreams] }

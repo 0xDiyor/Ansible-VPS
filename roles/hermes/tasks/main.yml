@@ -44,6 +44,17 @@
     mode: "0600"
   no_log: true   # keep API keys out of Ansible's output
 
+# Login for the dashboard. Required by Hermes as soon as it's reachable from
+# anything but localhost (here: your tailnet).
+- name: Write Hermes dashboard secrets file
+  ansible.builtin.template:
+    src: dashboard.env.j2
+    dest: "{{ hermes_dir }}/dashboard.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
 - name: Write Hermes compose file
   ansible.builtin.template:
     src: compose.yml.j2
