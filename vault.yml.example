@@ -5,3 +5,11 @@
 
 # openssl passwd -6     (type your sudo password; paste the $6$... output)
 vault_admin_password_hash: "$6$CHANGE_ME"
+
+# Anything Hermes reads from its environment. Keep only what you use.
+vault_hermes_env:
+  OPENROUTER_API_KEY: "sk-or-CHANGE_ME"
+  # ANTHROPIC_API_KEY: ""
+  # TELEGRAM_BOT_TOKEN: ""
+  # Without this, anyone who finds your bot can command it. Use your numeric Telegram user ID.
+  # TELEGRAM_ALLOWED_USERS: "123456789"

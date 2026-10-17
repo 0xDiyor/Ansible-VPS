@@ -12,3 +12,4 @@
     - { role: ssh, tags: [ssh] }
     - { role: firewall, tags: [firewall] }
     - { role: docker, tags: [docker] }
+    - { role: hermes, tags: [hermes] }

@@ -1,0 +1,61 @@
+# A "system" user: no password, no login shell, no home dir. It exists only
+# so Hermes' files and processes belong to someone who can't do anything else.
+- name: Create hermes group
+  ansible.builtin.group:
+    name: hermes
+    gid: "{{ hermes_uid }}"
+    system: true
+
+- name: Create hermes user
+  ansible.builtin.user:
+    name: hermes
+    uid: "{{ hermes_uid }}"
+    group: hermes
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ hermes_dir }}"
+    create_home: false
+    password: "!"
+
+# /srv/hermes        root-owned: compose file + secrets, hermes can't edit them
+# /srv/hermes/data   hermes-owned: the agent's memory, sessions, config
+- name: Create Hermes app directory
+  ansible.builtin.file:
+    path: "{{ hermes_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create Hermes data directory
+  ansible.builtin.file:
+    path: "{{ hermes_dir }}/data"
+    state: directory
+    owner: hermes
+    group: hermes
+    mode: "0700"
+
+- name: Write Hermes secrets file
+  ansible.builtin.template:
+    src: hermes.env.j2
+    dest: "{{ hermes_dir }}/hermes.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true   # keep API keys out of Ansible's output
+
+- name: Write Hermes compose file
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ hermes_dir }}/compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+# Equivalent to "docker compose up -d" in that folder. Recreates containers
+# when the compose file, image tag or secrets change.
+- name: Start Hermes
+  community.docker.docker_compose_v2:
+    project_src: "{{ hermes_dir }}"
+    state: present
+    pull: missing

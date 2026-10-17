@@ -20,3 +20,10 @@ firewall_open_ports:
   - { port: "80", proto: tcp }    # HTTP (Caddy redirects to HTTPS, and Let's Encrypt uses it)
   - { port: "443", proto: tcp }   # HTTPS
   - { port: "443", proto: udp }   # HTTP/3
+
+# ---- Hermes Agent ----------------------------------------------------------
+hermes_image: nousresearch/hermes-agent:v0.22.2
+hermes_uid: 10001
+# Environment variables handed to Hermes (API keys, bot tokens). See vault.yml.
+hermes_env: "{{ vault_hermes_env }}"
+hermes_mem_limit: 2g
