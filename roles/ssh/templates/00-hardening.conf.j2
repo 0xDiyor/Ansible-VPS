@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+# Keys only: no root, no passwords.
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+AuthenticationMethods publickey
+AllowUsers {{ admin_user }}
+
+# Slow down brute forcing and drop dead sessions.
+MaxAuthTries 3
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# Turn off features we don't use. "local" forwarding stays on so you can
+# reach the Hermes dashboard with: ssh -L 9119:localhost:9119 ...
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding local
+PermitTunnel no

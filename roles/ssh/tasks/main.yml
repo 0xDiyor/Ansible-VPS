@@ -1,0 +1,22 @@
+# Lockout guard: never disable root/password login unless the admin user can
+# already log in with a key. If bootstrap.yml wasn't run, stop here.
+- name: Read admin user's authorized_keys
+  ansible.builtin.slurp:
+    src: "/home/{{ admin_user }}/.ssh/authorized_keys"
+  register: ssh_admin_keys
+
+- name: Refuse to continue without an admin SSH key
+  ansible.builtin.assert:
+    that: (ssh_admin_keys.content | b64decode | trim) | length > 0
+    fail_msg: "No SSH key for {{ admin_user }}. Run bootstrap.yml first."
+
+# sshd uses the FIRST value it sees for each setting, and files in
+# sshd_config.d/ are read alphabetically. "00-" makes ours win over things
+# like the cloud image's 50-cloud-init.conf, which turns passwords back on.
+- name: Install SSH hardening config
+  ansible.builtin.template:
+    src: 00-hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s   # a syntax error here would lock you out
+  notify: Restart ssh

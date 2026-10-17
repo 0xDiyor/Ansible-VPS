@@ -9,3 +9,4 @@
   become: true   # use sudo for every task
   roles:
     - { role: common, tags: [common] }
+    - { role: ssh, tags: [ssh] }
