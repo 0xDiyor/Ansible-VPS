@@ -1,3 +1,6 @@
 # Vault password file. Never commit this; it unlocks every secret in the repo.
 .vault_pass
 *.retry
+# Real server details and secrets stay on this machine only.
+inventory/hosts.yml
+group_vars/all/vault.yml

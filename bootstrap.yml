@@ -1,17 +1,28 @@
 # Run ONCE on a fresh VPS, as root (the only account IONOS gives you):
-#   ansible-playbook bootstrap.yml -u root --ask-vault-pass
+#   ansible-playbook bootstrap.yml
 #
 # It creates your personal admin account with your SSH key and sudo rights.
 # After this, everything runs as that user via site.yml, and site.yml turns
 # root login off.
 - name: Bootstrap admin user
   hosts: vps
+  remote_user: root
   become: true
   tasks:
+    # Hashed on the server because macOS's openssl can't make SHA-512 hashes.
+    - name: Hash admin password
+      ansible.builtin.command:
+        cmd: openssl passwd -6 -stdin
+        stdin: "{{ admin_password }}"
+      register: bootstrap_admin_hash
+      changed_when: false
+      no_log: true
+
     - name: Create admin user
       ansible.builtin.user:
         name: "{{ admin_user }}"
-        password: "{{ admin_password_hash }}"
+        password: "{{ bootstrap_admin_hash.stdout }}"
+        update_password: on_create   # the hash has a new random salt every run
         groups: sudo
         append: true
         shell: /bin/bash

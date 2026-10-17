@@ -3,11 +3,15 @@
 # only reference them by their vault_* names.
 
 # ---- Admin login -----------------------------------------------------------
+# Defaults; set your real values in inventory/hosts.yml.
 # The only account allowed to SSH in. Root login gets disabled.
 admin_user: admin
-admin_ssh_pubkey: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"
-# SHA-512 crypt hash used for sudo. Generate with: openssl passwd -6
-admin_password_hash: "{{ vault_admin_password_hash }}"
+admin_ssh_key_file: ~/.ssh/id_ed25519
+admin_ssh_pubkey: "{{ lookup('file', admin_ssh_key_file + '.pub') }}"
+ansible_ssh_private_key_file: "{{ admin_ssh_key_file }}"
+admin_password: "{{ vault_admin_password }}"
+# Lets Ansible answer the sudo prompt itself (no -K needed).
+ansible_become_password: "{{ admin_password }}"
 
 # ---- System ----------------------------------------------------------------
 timezone: Etc/UTC
@@ -24,8 +28,10 @@ firewall_open_ports:
 # ---- AIOStreams ------------------------------------------------------------
 # Stremio only installs addons over HTTPS, so AIOStreams needs a domain whose
 # DNS A record points at this VPS. Caddy gets a certificate for it automatically.
+# Set it in inventory/hosts.yml.
 aiostreams_domain: aiostreams.example.com
-acme_email: you@example.com   # Let's Encrypt sends certificate expiry warnings here
+# Optional. Let's Encrypt sends certificate expiry warnings here.
+acme_email: ""
 # Pin exact versions so nothing changes unless you change it here.
 aiostreams_image: ghcr.io/viren070/aiostreams:v2.36.0
 aiostreams_uid: 10002
